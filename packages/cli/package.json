@@ -1,0 +1,14 @@
+{
+  "name": "@herodevs/hd-tracker",
+  "description": "CLI-based tool to calculate lines of code based upon configuration.",
+  "version": "0.0.1",
+  "bin": {
+    "hd-tracker": "./src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/herodevs/tracker.git"
+  },
+  "author": "HeroDevs",
+  "license": "MIT"
+}
