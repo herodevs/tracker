@@ -25,10 +25,7 @@ export function run() {
 
   const results = processConfig(config, rootDirectory);
 
-  const outputConfigs = Array.isArray(config.output)
-    ? config.output
-    : [config.output];
-  saveResults(localRootDir, outputConfigs, results);
+  saveResults(localRootDir, config.outputDir, results);
 }
 
 run();
