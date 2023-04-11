@@ -1,5 +1,10 @@
 import { ProcessResult } from './models/process-result';
-import { getTheRootDirectory, readConfig, saveResults } from './util';
+import {
+  getGitCommit,
+  getTheRootDirectory,
+  readConfig,
+  saveResults,
+} from './util';
 import * as fs from 'fs';
 
 jest.mock('fs', () => {
@@ -31,6 +36,17 @@ jest.mock('fs', () => {
       }
     }),
     writeFileSync: jest.fn(),
+  };
+});
+
+jest.mock('git-last-commit', () => {
+  return {
+    getLastCommit: (f) => {
+      f(null, {
+        hash: 'abc123',
+        committedOn: '1437988060',
+      });
+    },
   };
 });
 
@@ -74,6 +90,7 @@ describe('util', () => {
       outputDir = 'z';
       results = {
         timestamp: 'now',
+        hash: 'abc123',
         categories: [],
       };
     });
@@ -93,6 +110,20 @@ describe('util', () => {
       expect(fs.writeFileSync).toHaveBeenCalledWith(
         '/x/empty/data.json',
         JSON.stringify([results], null, 2)
+      );
+    });
+  });
+
+  describe('getGitCommit', () => {
+    it('should get the hash from the current commit', async () => {
+      const result = await getGitCommit();
+      expect(result.hash).toEqual('abc123');
+    });
+
+    it('should get a formatted date from the current commit', async () => {
+      const result = await getGitCommit();
+      expect(result.timestamp).toMatch(
+        /\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}/
       );
     });
   });

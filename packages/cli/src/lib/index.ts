@@ -11,7 +11,7 @@ interface Args {
   init?: boolean;
 }
 
-export function run() {
+export async function run() {
   const argv: Args = yargs(hideBin(global.process.argv)).argv as Args;
   const localRootDir = getTheRootDirectory(global.process.cwd());
 
@@ -23,7 +23,7 @@ export function run() {
   const rootDirectory = argv.root ? resolve(argv.root) : localRootDir;
   const config = readConfig(localRootDir, argv.config);
 
-  const results = processConfig(config, rootDirectory);
+  const results = await processConfig(config, rootDirectory);
 
   saveResults(localRootDir, config.outputDir, results);
 }
