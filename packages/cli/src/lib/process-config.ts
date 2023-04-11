@@ -1,12 +1,12 @@
 import { Config } from './models/config';
 import { ProcessResult } from './models/process-result';
 import { processCategory } from './process-category';
-import { format } from 'date-fns';
+import { getGitCommit } from './util';
 
-export function processConfig(
+export async function processConfig(
   config: Config,
   rootDirectory: string
-): ProcessResult {
+): Promise<ProcessResult> {
   console.log(`Starting...`);
   const categoryResults = Object.entries(config.categories).map(
     ([name, category]) =>
@@ -16,8 +16,10 @@ export function processConfig(
         config.ignorePatterns || []
       )
   );
+  const commit = await getGitCommit();
   return {
-    timestamp: format(new Date(), 'yyyy-MM-dd-HH-mm-ss-SSS'),
+    timestamp: commit.timestamp,
+    hash: commit.hash,
     categories: categoryResults,
   };
 }
