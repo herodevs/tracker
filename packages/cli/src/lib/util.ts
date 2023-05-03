@@ -4,6 +4,85 @@ import { format } from 'date-fns';
 import { Commit, getLastCommit } from 'git-last-commit';
 import { Config } from './models/config';
 import { ProcessResult } from './models/process-result';
+import { AggregateResult } from './models/aggregate-result';
+import { argv } from './argv';
+import { TrackerChart } from './tracker-chart';
+
+const DATE_FORMAT = 'yyyy-MM-dd-HH-mm-ss-SSS';
+
+/**
+ * 
+ * 
+ * 
+ * internal alphabetized helper functions ->
+ * 
+ */
+
+function formatDate(date: Date): string {
+  return format(date, DATE_FORMAT);
+}
+
+function getDataFilePath(
+  localRootDir: string,
+  outputDir: string,
+) {
+  return resolve(join(localRootDir, outputDir, 'data.json'));
+}
+
+function getGitDate(date: string): Date {
+  return new Date(+date * 1000);
+}
+
+function getLastCommitAsPromise(): Promise<Commit> {
+  return new Promise((resolve, reject) => {
+    getLastCommit((err, commit) => {
+      if (err) {
+        reject(err);
+      }
+      resolve(commit);
+    });
+  });
+}
+
+/**
+ * 
+ * 
+ * 
+ * exported alphabetized util functions ->
+ * 
+ */
+
+export async function createDataVizIn(
+  parentDirectory: string,
+  allJsonData: ProcessResult[],
+  graphablePropertyName: keyof AggregateResult = 'total'
+): Promise<void> {
+  const chart = new TrackerChart(argv.chart, allJsonData, DATE_FORMAT);
+  return chart.writeTo(parentDirectory, graphablePropertyName);
+}
+
+export function getData(
+  localRootDir: string,
+  outputDir: string
+) {
+  const outputPath = getDataFilePath(localRootDir, outputDir);
+  let contents = '';
+  if (existsSync(outputPath)) {
+    contents = readFileSync(outputPath).toString('utf-8');
+  }
+  return contents === '' ? [] : JSON.parse(contents);
+}
+
+export async function getGitCommit(): Promise<{
+  hash: string;
+  timestamp: string;
+}> {
+  const commit = await getLastCommitAsPromise();
+  return {
+    hash: commit.hash,
+    timestamp: formatDate(getGitDate(commit.committedOn)),
+  };
+}
 
 export function getTheRootDirectory(directory: string): string {
   if (existsSync(join(directory, 'package.json'))) {
@@ -32,47 +111,13 @@ export function saveResults(
   results: ProcessResult
 ): void {
   console.log('Outputting file');
-  const outputPath = resolve(join(localRootDir, outputDir, 'data.json'));
-  let contents = '';
-  if (existsSync(outputPath)) {
-    contents = readFileSync(outputPath).toString('utf-8');
-  }
-  const output: ProcessResult[] = contents === '' ? [] : JSON.parse(contents);
+  const output: ProcessResult[] = getData(localRootDir, outputDir);
   if (!Array.isArray(output)) {
     console.error('Invalid output file format');
   }
   output.push(results);
+  const outputPath = getDataFilePath(localRootDir, outputDir);
   const outputText = JSON.stringify(output, null, 2);
   writeFileSync(outputPath, outputText);
   console.log(`Output written to: ${outputPath}`);
-}
-
-export async function getGitCommit(): Promise<{
-  hash: string;
-  timestamp: string;
-}> {
-  const commit = await getLastCommitAsPromise();
-  return {
-    hash: commit.hash,
-    timestamp: formatDate(getGitDate(commit.committedOn)),
-  };
-}
-
-function getLastCommitAsPromise(): Promise<Commit> {
-  return new Promise((resolve, reject) => {
-    getLastCommit((err, commit) => {
-      if (err) {
-        reject(err);
-      }
-      resolve(commit);
-    });
-  });
-}
-
-function getGitDate(date: string): Date {
-  return new Date(+date * 1000);
-}
-
-function formatDate(date: Date): string {
-  return format(date, 'yyyy-MM-dd-HH-mm-ss-SSS');
 }

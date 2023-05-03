@@ -1,18 +1,12 @@
 import { resolve } from 'path';
-import * as yargs from 'yargs';
-import { hideBin } from 'yargs/helpers';
 import { processConfig } from './process-config';
 import { initialize } from './initialize';
-import { getTheRootDirectory, readConfig, saveResults } from './util';
+import { createDataVizIn, getData, getTheRootDirectory, readConfig, saveResults } from './util';
+import { argv } from './argv';
 
-interface Args {
-  root?: string;
-  config?: string;
-  init?: boolean;
-}
 
-export async function run() {
-  const argv: Args = yargs(hideBin(global.process.argv)).argv as Args;
+(async function run() {
+
   const localRootDir = getTheRootDirectory(global.process.cwd());
 
   if (argv.init) {
@@ -26,6 +20,11 @@ export async function run() {
   const results = await processConfig(config, rootDirectory);
 
   saveResults(localRootDir, config.outputDir, results);
-}
 
-run();
+  
+  const allData = getData(localRootDir, config.outputDir);
+
+  const parentDir = resolve(localRootDir, config.outputDir);
+
+  await createDataVizIn(parentDir, allData);
+}());
