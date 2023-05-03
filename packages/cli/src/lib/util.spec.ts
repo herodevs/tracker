@@ -1,5 +1,10 @@
+import { trace } from 'console';
+import { argv } from './argv';
+import { ChartConfig } from './models/chart-config';
 import { ProcessResult } from './models/process-result';
+import { TrackerChart } from './tracker-chart';
 import {
+  createDataVizIn,
   getGitCommit,
   getTheRootDirectory,
   readConfig,
@@ -16,6 +21,8 @@ jest.mock('fs', () => {
         case '/custom/dir/something.json':
           return true;
         case '/x/z/data.json':
+          return true;
+        case '/x/z/viz.png':
           return true;
         default:
           return false;
@@ -35,6 +42,7 @@ jest.mock('fs', () => {
           return JSON.stringify([]);
       }
     }),
+    rmSync: jest.fn(),
     writeFileSync: jest.fn(),
   };
 });
@@ -127,4 +135,18 @@ describe('util', () => {
       );
     });
   });
+
+  describe('createDataVizIn', () => {
+
+    const writeToSpy = jest.spyOn(TrackerChart.prototype, 'writeTo');
+
+    beforeEach(() => {
+      writeToSpy.mockReset();
+    });
+
+    it('should use default outFile', async () => {
+      await createDataVizIn('', [] as any, 'total');
+      expect(writeToSpy).toHaveBeenCalled();
+    })
+  })  
 });
